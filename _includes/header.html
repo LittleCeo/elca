@@ -1,0 +1,491 @@
+<header class="header">
+    <div class="container">
+        <div class="nav-container">
+            <div class="logo">
+                <a href="{{ '/' | relative_url }}">
+                    {% if site.logo %}
+                        <img src="{{ site.logo | relative_url }}" alt="{{ site.title }} Logo">
+                    {% endif %}
+                    <span>{{ site.title_short | default: site.title }}</span>
+                </a>
+            </div>
+            
+            <nav class="nav">
+                <!-- Search Icon -->
+                <button class="search-toggle" id="searchToggle" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                    <svg class="sun-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <svg class="moon-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                </button>
+
+                <!-- Navigation Menu -->
+                <ul class="nav-menu" id="navMenu">
+                    {% comment %} 
+                    NEW NAVIGATION SYSTEM:
+                    - Show main navigation when on home or when not in a section
+                    - Show section navigation when inside a section directory
+                    {% endcomment %}
+                    
+                    {% comment %} Check if we're in a section directory {% endcomment %}
+                    {% assign current_section = nil %}
+                    {% assign current_section_pages = nil %}
+                    
+                    {% comment %} Get current directory path (first segment after site.baseurl) {% endcomment %}
+                    {% assign path_segments = page.url | split: '/' %}
+                    {% if path_segments.size > 2 and path_segments[1] != '' %}
+                        {% assign current_dir = path_segments[1] %}
+                        
+                        {% comment %} Find if this directory matches any navigation section {% endcomment %}
+                        {% for section in site.navigation %}
+                            {% if section[1] %}
+                                {% comment %} Section with dropdown {% endcomment %}
+                                {% for item in section[1] %}
+                                    {% assign item_url = item.url | relative_url %}
+                                    {% assign item_path_segments = item_url | split: '/' %}
+                                    {% if item_path_segments.size > 2 and item_path_segments[1] == current_dir %}
+                                        {% assign current_section = section %}
+                                        {% assign current_section_pages = section[1] %}
+                                        {% break %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if current_section %}{% break %}{% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+                    {% comment %} Show section navigation if we're in a section directory {% endcomment %}
+                    {% if current_section %}
+                        <!-- Breadcrumb back to main navigation -->
+                        <li class="nav-item breadcrumb-item">
+                            <a href="javascript:void(0)" class="nav-link breadcrumb-link" onclick="showMainNavigation()">
+                                <svg class="back-arrow" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                                </svg>
+                                Back to Main
+                            </a>
+                        </li>
+                        
+                        <!-- Section title -->
+                        <li class="nav-item section-title">
+                            <span class="nav-link section-title-link">
+                                {{ current_section[0] }}
+                            </span>
+                        </li>
+                        
+                        <!-- Section pages -->
+                        {% for item in current_section_pages %}
+                            {% assign item_url = item.url | relative_url %}
+                            <li class="nav-item">
+                                <a href="{{ item_url }}" class="nav-link {% if page.url == item_url %}active{% endif %}">
+                                    {{ item[0] }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    
+                    {% else %}
+                        {% comment %} Show main navigation {% endcomment %}
+                        {% for section in site.navigation %}
+                            {% if section.url %}
+                                {% comment %} Single page item (like Home) {% endcomment %}
+                                {% assign section_url = section.url | relative_url %}
+                                <li class="nav-item">
+                                    <a href="{{ section_url }}" class="nav-link {% if page.url == section_url %}active{% endif %}">
+                                        {{ section[0] }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                {% comment %} Section with dropdown {% endcomment %}
+                                {% assign section_first_url = section[1][0].url | relative_url %}
+                                <li class="nav-item dropdown">
+                                    <a href="{{ section_first_url }}" class="nav-link">
+                                        {{ section[0] }} <span class="dropdown-arrow">▼</span>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        {% for item in section[1] %}
+                                            {% assign item_url = item.url | relative_url %}
+                                            <li>
+                                                <a href="{{ item_url }}" class="{% if page.url == item_url %}dropdown-active{% endif %}">
+                                                    {{ item[0] }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+                
+                <div class="hamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-modal">
+            <div class="search-header">
+                <div class="search-input-container">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search documentation..." autocomplete="off">
+                    <button class="search-close" id="searchClose" aria-label="Close search">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="search-results" id="searchResults">
+                <div class="search-placeholder">
+                    <p>Type here to search</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Navigation state management
+    function showMainNavigation() {
+        sessionStorage.setItem('forceMainNavigation', 'true');
+        // Redirect to home to show main navigation
+        window.location.href = '{{ "/" | relative_url }}';
+    }
+
+    // Check if we should force main navigation
+    if (sessionStorage.getItem('forceMainNavigation') === 'true') {
+        sessionStorage.removeItem('forceMainNavigation');
+    }
+
+    // Fix for active state - ensure only current page is active
+    function fixActiveStates() {
+        const currentPath = window.location.pathname;
+        const homeLink = document.querySelector('.nav-link[href="/"]');
+        
+        // Remove active class from home if we're not on home page
+        if (homeLink && currentPath !== '/' && currentPath !== '/index.html') {
+            homeLink.classList.remove('active');
+        }
+        
+        // Ensure only one active item at a time
+        const allNavLinks = document.querySelectorAll('.nav-link');
+        let activeFound = false;
+        
+        allNavLinks.forEach(link => {
+            if (link.classList.contains('active') && activeFound) {
+                link.classList.remove('active');
+            } else if (link.classList.contains('active')) {
+                activeFound = true;
+            }
+        });
+    }
+
+    // Search functionality
+    const searchToggle = document.getElementById('searchToggle');
+    const searchOverlay = document.getElementById('searchOverlay');
+    const searchClose = document.getElementById('searchClose');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    
+    let lunrIndex = null;
+    let searchData = {};
+
+    // Initialize search
+    function initSearch() {
+        fetch('{{ "/assets/js/search-data.json" | relative_url }}')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                searchData = data;
+                
+                lunrIndex = lunr(function() {
+                    this.ref('id');
+                    this.field('title', { boost: 15 });
+                    this.field('content', { boost: 1 });
+                    this.field('doc', { boost: 10 });
+                    
+                    this.pipeline.remove(lunr.stemmer);
+                    this.searchPipeline.remove(lunr.stemmer);
+                    
+                    for (const id in searchData) {
+                        this.add({
+                            id: id,
+                            title: searchData[id].title || '',
+                            content: searchData[id].content || '',
+                            doc: searchData[id].doc || ''
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Search init failed:', error);
+                searchResults.innerHTML = '<div class="search-error"><p>Search temporarily unavailable</p></div>';
+            });
+    }
+
+    // Search functions
+    function openSearch() {
+        searchOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        searchInput.focus();
+        if (!lunrIndex) initSearch();
+    }
+
+    function closeSearch() {
+        searchOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        searchInput.value = '';
+        searchResults.innerHTML = '<div class="search-placeholder"><p>Type here to search</p></div>';
+    }
+
+    function performSearch(query) {
+        if (!query.trim()) {
+            searchResults.innerHTML = '<div class="search-placeholder"><p>Type here to search</p></div>';
+            return;
+        }
+        
+        if (!lunrIndex) {
+            searchResults.innerHTML = '<div class="search-error"><p>Search index loading...</p></div>';
+            return;
+        }
+
+        try {
+            const searchQuery = query.length < 3 ? `*${query}*` : query;
+            const results = lunrIndex.search(searchQuery);
+            displayResults(results, query);
+        } catch (error) {
+            console.error('Search error:', error);
+            fallbackSearch(query);
+        }
+    }
+
+    function fallbackSearch(query) {
+        const results = [];
+        const queryLower = query.toLowerCase();
+        
+        for (const id in searchData) {
+            const item = searchData[id];
+            const title = item.title ? item.title.toLowerCase() : '';
+            const content = item.content ? item.content.toLowerCase() : '';
+            const doc = item.doc ? item.doc.toLowerCase() : '';
+            
+            if (title.includes(queryLower) || content.includes(queryLower) || doc.includes(queryLower)) {
+                results.push({ ref: id, score: 1 });
+            }
+        }
+        
+        results.sort((a, b) => {
+            const itemA = searchData[a.ref];
+            const itemB = searchData[b.ref];
+            const titleMatchA = itemA.title.toLowerCase().includes(queryLower);
+            const titleMatchB = itemB.title.toLowerCase().includes(queryLower);
+            
+            if (titleMatchA && !titleMatchB) return -1;
+            if (!titleMatchA && titleMatchB) return 1;
+            return 0;
+        });
+        
+        displayResults(results, query);
+    }
+
+    function displayResults(results, query) {
+        if (results.length === 0) {
+            searchResults.innerHTML = `<div class="search-no-results"><p>No results found for "${query}"</p></div>`;
+            return;
+        }
+
+        let html = '<div class="search-results-list">';
+        results.slice(0, 10).forEach(result => {
+            const item = searchData[result.ref];
+            if (!item) return;
+            
+            const excerpt = createExcerpt(item.content, query);
+            
+            html += `
+                <a href="${item.url}" class="search-result-item">
+                    <div class="search-result-content">
+                        <div class="search-result-title">${highlightText(item.title, query)}</div>
+                        <div class="search-result-excerpt">${excerpt}</div>
+                        <div class="search-result-url">${item.relUrl}</div>
+                    </div>
+                    <svg class="search-result-arrow" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </a>
+            `;
+        });
+        html += '</div>';
+        searchResults.innerHTML = html;
+    }
+
+    function createExcerpt(content, query) {
+        if (!content) return 'No content available';
+        
+        const queryLower = query.toLowerCase();
+        const contentLower = content.toLowerCase();
+        const index = contentLower.indexOf(queryLower);
+        
+        if (index === -1) {
+            return content.substring(0, 150) + '...';
+        }
+        
+        const start = Math.max(0, index - 50);
+        const end = Math.min(content.length, index + query.length + 100);
+        let excerpt = content.substring(start, end);
+        
+        if (start > 0) excerpt = '...' + excerpt;
+        if (end < content.length) excerpt = excerpt + '...';
+        
+        return highlightText(excerpt, query);
+    }
+
+    function highlightText(text, query) {
+        if (!query) return text;
+        
+        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    function escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Event listeners
+    let searchTimeout;
+    if (searchToggle) searchToggle.addEventListener('click', openSearch);
+    if (searchClose) searchClose.addEventListener('click', closeSearch);
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => performSearch(e.target.value), 150);
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSearch();
+        });
+    }
+    if (searchOverlay) {
+        searchOverlay.addEventListener('click', (e) => {
+            if (e.target === searchOverlay) closeSearch();
+        });
+    }
+
+    // Initialize search on page load
+    initSearch();
+
+    // Fix active states on page load
+    fixActiveStates();
+
+    // Navigation functionality
+    const hamburger = document.querySelector('.hamburger');
+    const navMenu = document.querySelector('.nav-menu');
+    const dropdowns = document.querySelectorAll('.dropdown');
+    
+    if (hamburger) {
+        hamburger.addEventListener('click', function() {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+        });
+    }
+    
+    // Handle main dropdowns
+    dropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('.nav-link');
+        const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+        
+        dropdown.addEventListener('mouseenter', function() {
+            if (window.innerWidth > 768) {
+                dropdownMenu.style.opacity = '1';
+                dropdownMenu.style.visibility = 'visible';
+                dropdownMenu.style.transform = 'translateY(0)';
+            }
+        });
+        
+        dropdown.addEventListener('mouseleave', function() {
+            if (window.innerWidth > 768) {
+                dropdownMenu.style.opacity = '0';
+                dropdownMenu.style.visibility = 'hidden';
+                dropdownMenu.style.transform = 'translateY(10px)';
+            }
+        });
+        
+        link.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                dropdown.classList.toggle('active');
+                
+                dropdowns.forEach(otherDropdown => {
+                    if (otherDropdown !== dropdown) {
+                        otherDropdown.classList.remove('active');
+                    }
+                });
+            }
+        });
+    });
+    
+    // Header scroll effect
+    const header = document.querySelector('.header');
+    if (header) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    }
+    
+    // Close mobile menu when clicking on a link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                const parentDropdown = link.closest('.dropdown');
+                if (!parentDropdown) {
+                    if (hamburger) hamburger.classList.remove('active');
+                    if (navMenu) navMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+    });
+
+    // Dark mode functionality
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        const currentTheme = localStorage.getItem('theme') || 
+                            (prefersDarkScheme.matches ? 'dark' : 'light');
+        
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+});
+</script>
