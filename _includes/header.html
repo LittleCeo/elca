@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderDesktopNavigation();
         renderMobileNavigation();
         setupNavigationEvents();
+        markCurrentPage();
     }
 
     // Render desktop navigation
@@ -175,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const hasChildren = item.children && item.children.length > 0;
             const isActive = isItemActive(item);
+            const isCurrent = isCurrentPage(item);
             const isOpen = treeState[item.url] !== undefined ? treeState[item.url] : isActive;
 
             if (hasChildren) {
@@ -195,8 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             } else {
                 html += `
-                    <li class="nav-item ${isActive ? 'active' : ''}">
-                        <a href="${item.url}" class="nav-link">
+                    <li class="nav-item ${isCurrent ? 'current-page' : ''}">
+                        <a href="${item.url}" class="nav-link ${isCurrent ? 'exact-active' : ''}">
                             ${item.title}
                         </a>
                     </li>
@@ -207,32 +209,61 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
 
-    // Check if item is active - improved for nested pages
+    // Check if item is active (for folder highlighting)
     function isItemActive(item) {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const itemPath = item.url.replace(/\/$/, '');
+        const currentPath = normalizePath(window.location.pathname);
         
-        // Exact match
-        if (currentPath === itemPath) {
-            return true;
-        }
-
-        // Check if this is a parent folder that contains the current page
         if (item.children) {
             return item.children.some(child => {
-                const childPath = child.url.replace(/\/$/, '');
+                const childPath = normalizePath(child.url);
                 return currentPath === childPath || currentPath.startsWith(childPath + '/');
             });
         }
-
-        return false;
+        
+        const itemPath = normalizePath(item.url);
+        return currentPath.startsWith(itemPath);
     }
 
-    // Check if item is current page (for exact highlighting)
+    // Check if item is the exact current page
     function isCurrentPage(item) {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const itemPath = item.url.replace(/\/$/, '');
+        const currentPath = normalizePath(window.location.pathname);
+        const itemPath = normalizePath(item.url);
         return currentPath === itemPath;
+    }
+
+    // Normalize paths for comparison
+    function normalizePath(path) {
+        return path.replace(/\/$/, '') || '/';
+    }
+
+    // Mark current page after DOM is rendered
+    function markCurrentPage() {
+        const currentPath = normalizePath(window.location.pathname);
+        
+        document.querySelectorAll('.nav-link').forEach(link => {
+            const linkPath = normalizePath(link.getAttribute('href'));
+            if (linkPath === currentPath) {
+                link.classList.add('exact-active');
+                link.closest('.nav-item').classList.add('current-page');
+                
+                // Auto-expand parent folders
+                let parentFolder = link.closest('.nav-collapse');
+                while (parentFolder) {
+                    const folder = parentFolder.previousElementSibling;
+                    if (folder && folder.classList.contains('folder-toggle')) {
+                        const folderItem = folder.closest('.nav-folder');
+                        folderItem.classList.add('open', 'active');
+                        parentFolder.classList.add('open');
+                        
+                        const folderUrl = folder.dataset.url;
+                        if (folderUrl) {
+                            treeState[folderUrl] = true;
+                        }
+                    }
+                    parentFolder = parentFolder.parentElement.closest('.nav-collapse');
+                }
+            }
+        });
     }
 
     // Setup navigation event listeners
