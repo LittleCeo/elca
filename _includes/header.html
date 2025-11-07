@@ -140,6 +140,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Tree state for collapsed/expanded folders
     const treeState = {};
 
+    // Initialize theme FIRST to prevent flash of wrong theme
+    function initTheme() {
+        // Force dark theme as default
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        let currentTheme = localStorage.getItem('theme');
+        
+        // If no theme is saved, default to dark
+        if (!currentTheme) {
+            currentTheme = 'dark';
+            localStorage.setItem('theme', 'dark');
+        }
+        
+        // Apply the theme immediately
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        console.log('Theme initialized to:', currentTheme);
+        
+        // Setup toggle functionality
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            console.log('Toggling theme from', currentTheme, 'to', newTheme);
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        // Add event listeners
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleMobile = document.getElementById('themeToggleMobile');
+        
+        if (themeToggle) {
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+        if (themeToggleMobile) {
+            themeToggleMobile.addEventListener('click', toggleTheme);
+        }
+    }
+
     // Initialize navigation
     function initNavigation() {
         renderDesktopNavigation();
@@ -318,29 +357,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-    }
-
-    // Theme functionality
-    const themeToggle = document.getElementById('themeToggle');
-    const themeToggleMobile = document.getElementById('themeToggleMobile');
-    
-    function initTheme() {
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        const currentTheme = localStorage.getItem('theme') || 
-                            (prefersDarkScheme.matches ? 'dark' : 'light');
-        
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        }
-        
-        if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
-        if (themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
     }
 
     // Search functionality
@@ -544,9 +560,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize everything
+    // Initialize everything - THEME FIRST
+    initTheme();
     initNavigation();
     initSearch();
-    initTheme();
 });
 </script>
