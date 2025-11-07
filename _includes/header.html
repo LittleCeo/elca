@@ -28,11 +28,14 @@
                     </svg>
                 </button>
 
-                <!-- Navigation Menu -->
-                <ul class="nav-menu" id="navMenu">
-                    <!-- Navigation items will be populated here -->
-                </ul>
-                
+                <!-- Desktop Navigation Menu -->
+                <div class="desktop-nav">
+                    <ul class="nav-menu" id="navMenu">
+                        <!-- Navigation items will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Mobile Navigation Toggle -->
                 <div class="hamburger">
                     <span class="bar"></span>
                     <span class="bar"></span>
@@ -41,6 +44,44 @@
             </nav>
         </div>
     </div>
+
+    <!-- Mobile Navigation Sidebar -->
+    <aside class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-content">
+            <div class="mobile-nav-header">
+                <div class="logo">
+                    <a href="{{ '/' | relative_url }}">
+                        {% if site.logo %}
+                            <img src="{{ site.logo | relative_url }}" alt="{{ site.title }} Logo">
+                        {% endif %}
+                        <span>{{ site.title_short | default: site.title }}</span>
+                    </a>
+                </div>
+                <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close menu">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mobile-nav-menu" id="mobileNavMenu">
+                <!-- Mobile navigation items will be populated here -->
+            </div>
+            
+            <div class="mobile-nav-footer">
+                <div class="theme-switch-mobile">
+                    <button class="theme-toggle-mobile" id="themeToggleMobile" aria-label="Toggle dark mode">
+                        <svg class="sun-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <svg class="moon-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
 
     <!-- Search Overlay -->
     <div class="search-overlay" id="searchOverlay">
@@ -69,7 +110,175 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
+    // Navigation data structure
+    const navigationData = {
+        items: [
+            {% for item in site.data.navigation %}
+            {
+                title: "{{ item.title }}",
+                url: "{{ item.url | relative_url }}",
+                type: "{{ item.type | default: 'page' }}",
+                {% if item.children %}
+                children: [
+                    {% for child in item.children %}
+                    {
+                        title: "{{ child.title }}",
+                        url: "{{ child.url | relative_url }}"
+                    }{% unless forloop.last %},{% endunless %}
+                    {% endfor %}
+                ]
+                {% endif %}
+            }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+        ]
+    };
+
+    // Tree state for collapsed/expanded folders
+    const treeState = {};
+
+    // Initialize navigation
+    function initNavigation() {
+        renderDesktopNavigation();
+        renderMobileNavigation();
+        setupNavigationEvents();
+    }
+
+    // Render desktop navigation
+    function renderDesktopNavigation() {
+        const navMenu = document.getElementById('navMenu');
+        if (!navMenu) return;
+
+        navMenu.innerHTML = generateNavigationHTML(navigationData.items, false);
+    }
+
+    // Render mobile navigation
+    function renderMobileNavigation() {
+        const mobileNavMenu = document.getElementById('mobileNavMenu');
+        if (!mobileNavMenu) return;
+
+        mobileNavMenu.innerHTML = generateNavigationHTML(navigationData.items, true);
+    }
+
+    // Generate navigation HTML
+    function generateNavigationHTML(items, isMobile = false) {
+        let html = '';
+        
+        items.forEach(item => {
+            if (item.type === 'separator') {
+                html += `<li class="nav-separator">${item.title || '<hr>'}</li>`;
+                return;
+            }
+
+            const hasChildren = item.children && item.children.length > 0;
+            const isActive = isItemActive(item);
+            const isOpen = treeState[item.url] !== undefined ? treeState[item.url] : isActive;
+
+            if (hasChildren) {
+                html += `
+                    <li class="nav-item nav-folder ${isOpen ? 'open' : ''} ${isActive ? 'active' : ''}">
+                        <button class="nav-link folder-toggle" data-url="${item.url}">
+                            <span>${item.title}</span>
+                            <svg class="folder-arrow" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                        <div class="nav-collapse ${isOpen ? 'open' : ''}">
+                            <ul class="nav-submenu">
+                                ${generateNavigationHTML(item.children, isMobile)}
+                            </ul>
+                        </div>
+                    </li>
+                `;
+            } else {
+                html += `
+                    <li class="nav-item ${isActive ? 'active' : ''}">
+                        <a href="${item.url}" class="nav-link">
+                            ${item.title}
+                        </a>
+                    </li>
+                `;
+            }
+        });
+
+        return html;
+    }
+
+    // Check if item is active
+    function isItemActive(item) {
+        const currentPath = window.location.pathname;
+        
+        if (item.url === currentPath) {
+            return true;
+        }
+
+        // Check if current path starts with item url (for nested pages)
+        if (item.url !== '/' && currentPath.startsWith(item.url)) {
+            return true;
+        }
+
+        // Check children
+        if (item.children) {
+            return item.children.some(child => isItemActive(child));
+        }
+
+        return false;
+    }
+
+    // Setup navigation event listeners
+    function setupNavigationEvents() {
+        // Folder toggle
+        document.querySelectorAll('.folder-toggle').forEach(button => {
+            button.addEventListener('click', function() {
+                const url = this.dataset.url;
+                const folder = this.closest('.nav-folder');
+                const collapse = this.nextElementSibling;
+                
+                treeState[url] = !folder.classList.contains('open');
+                
+                folder.classList.toggle('open');
+                collapse.classList.toggle('open');
+            });
+        });
+
+        // Mobile nav toggle
+        const hamburger = document.querySelector('.hamburger');
+        const mobileNav = document.getElementById('mobileNav');
+        const mobileNavClose = document.getElementById('mobileNavClose');
+
+        if (hamburger && mobileNav) {
+            hamburger.addEventListener('click', function() {
+                mobileNav.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+
+        if (mobileNavClose) {
+            mobileNavClose.addEventListener('click', function() {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Close mobile nav when clicking on links
+        document.querySelectorAll('.mobile-nav .nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile nav when clicking outside
+        if (mobileNav) {
+            mobileNav.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+    }
+
+    // Search functionality (existing code)
     const searchToggle = document.getElementById('searchToggle');
     const searchOverlay = document.getElementById('searchOverlay');
     const searchClose = document.getElementById('searchClose');
@@ -79,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let lunrIndex = null;
     let searchData = {};
 
-    // Initialize search
     function initSearch() {
         fetch('{{ "/assets/js/search-data.json" | relative_url }}')
             .then(response => {
@@ -114,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Search functions
     function openSearch() {
         searchOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -241,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // Event listeners
+    // Event listeners for search
     let searchTimeout;
     if (searchToggle) searchToggle.addEventListener('click', openSearch);
     if (searchClose) searchClose.addEventListener('click', closeSearch);
@@ -260,47 +467,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize search on page load
-    initSearch();
-
-    // Navigation functionality
-    const hamburger = document.querySelector('.hamburger');
-    const navMenu = document.querySelector('.nav-menu');
-    
-    if (hamburger) {
-        hamburger.addEventListener('click', function() {
-            hamburger.classList.toggle('active');
-            navMenu.classList.toggle('active');
-            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
-        });
-    }
-    
-    // Header scroll effect
-    const header = document.querySelector('.header');
-    if (header) {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 100) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-        });
-    }
-
-    // Close mobile menu when clicking on a link
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                if (hamburger) hamburger.classList.remove('active');
-                if (navMenu) navMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-    });
-
-    // Dark mode functionality
+    // Theme functionality
     const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
+    const themeToggleMobile = document.getElementById('themeToggleMobile');
+    
+    function initTheme() {
         const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
         const currentTheme = localStorage.getItem('theme') || 
                             (prefersDarkScheme.matches ? 'dark' : 'light');
@@ -315,7 +486,25 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('theme', newTheme);
         }
         
-        themeToggle.addEventListener('click', toggleTheme);
+        if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+        if (themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
     }
+
+    // Header scroll effect
+    const header = document.querySelector('.header');
+    if (header) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    }
+
+    // Initialize everything
+    initNavigation();
+    initSearch();
+    initTheme();
 });
 </script>
