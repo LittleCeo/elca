@@ -28,13 +28,6 @@
                     </svg>
                 </button>
 
-                <!-- Desktop Navigation Menu -->
-                <div class="desktop-nav">
-                    <ul class="nav-menu" id="navMenu">
-                        <!-- Navigation items will be populated here -->
-                    </ul>
-                </div>
-
                 <!-- Mobile Navigation Toggle -->
                 <div class="hamburger">
                     <span class="bar"></span>
@@ -44,6 +37,17 @@
             </nav>
         </div>
     </div>
+
+    <!-- Desktop Sidebar Navigation -->
+    <aside class="desktop-sidebar" id="desktopSidebar">
+        <div class="sidebar-content">
+            <nav class="sidebar-nav">
+                <ul class="nav-menu" id="navMenu">
+                    <!-- Navigation items will be populated here -->
+                </ul>
+            </nav>
+        </div>
+    </aside>
 
     <!-- Mobile Navigation Sidebar -->
     <aside class="mobile-nav" id="mobileNav">
@@ -111,27 +115,27 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Navigation data structure
-const navigationData = {
-    items: [
-        {% for item in site.navigation %}
-        {
-            title: "{{ item.title }}",
-            url: "{{ item.url | relative_url }}",
-            type: "{{ item.type | default: 'page' }}",
-            {% if item.children %}
-            children: [
-                {% for child in item.children %}
-                {
-                    title: "{{ child.title }}",
-                    url: "{{ child.url | relative_url }}"
-                }{% unless forloop.last %},{% endunless %}
-                {% endfor %}
-            ]
-            {% endif %}
-        }{% unless forloop.last %},{% endunless %}
-        {% endfor %}
-    ]
-};
+    const navigationData = {
+        items: [
+            {% for item in site.navigation %}
+            {
+                title: "{{ item.title }}",
+                url: "{{ item.url | relative_url }}",
+                type: "{{ item.type | default: 'page' }}",
+                {% if item.children %}
+                children: [
+                    {% for child in item.children %}
+                    {
+                        title: "{{ child.title }}",
+                        url: "{{ child.url | relative_url }}"
+                    }{% unless forloop.last %},{% endunless %}
+                    {% endfor %}
+                ]
+                {% endif %}
+            }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+        ]
+    };
 
     // Tree state for collapsed/expanded folders
     const treeState = {};
@@ -203,25 +207,32 @@ const navigationData = {
         return html;
     }
 
-    // Check if item is active
+    // Check if item is active - improved for nested pages
     function isItemActive(item) {
-        const currentPath = window.location.pathname;
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const itemPath = item.url.replace(/\/$/, '');
         
-        if (item.url === currentPath) {
+        // Exact match
+        if (currentPath === itemPath) {
             return true;
         }
 
-        // Check if current path starts with item url (for nested pages)
-        if (item.url !== '/' && currentPath.startsWith(item.url)) {
-            return true;
-        }
-
-        // Check children
+        // Check if this is a parent folder that contains the current page
         if (item.children) {
-            return item.children.some(child => isItemActive(child));
+            return item.children.some(child => {
+                const childPath = child.url.replace(/\/$/, '');
+                return currentPath === childPath || currentPath.startsWith(childPath + '/');
+            });
         }
 
         return false;
+    }
+
+    // Check if item is current page (for exact highlighting)
+    function isCurrentPage(item) {
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const itemPath = item.url.replace(/\/$/, '');
+        return currentPath === itemPath;
     }
 
     // Setup navigation event listeners
