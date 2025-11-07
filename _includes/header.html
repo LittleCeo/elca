@@ -111,27 +111,27 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Navigation data structure
-    const navigationData = {
-        items: [
-            {% for item in site.data.navigation %}
-            {
-                title: "{{ item.title }}",
-                url: "{{ item.url | relative_url }}",
-                type: "{{ item.type | default: 'page' }}",
-                {% if item.children %}
-                children: [
-                    {% for child in item.children %}
-                    {
-                        title: "{{ child.title }}",
-                        url: "{{ child.url | relative_url }}"
-                    }{% unless forloop.last %},{% endunless %}
-                    {% endfor %}
-                ]
-                {% endif %}
-            }{% unless forloop.last %},{% endunless %}
-            {% endfor %}
-        ]
-    };
+const navigationData = {
+    items: [
+        {% for item in site.navigation %}
+        {
+            title: "{{ item.title }}",
+            url: "{{ item.url | relative_url }}",
+            type: "{{ item.type | default: 'page' }}",
+            {% if item.children %}
+            children: [
+                {% for child in item.children %}
+                {
+                    title: "{{ child.title }}",
+                    url: "{{ child.url | relative_url }}"
+                }{% unless forloop.last %},{% endunless %}
+                {% endfor %}
+            ]
+            {% endif %}
+        }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+    ]
+};
 
     // Tree state for collapsed/expanded folders
     const treeState = {};
