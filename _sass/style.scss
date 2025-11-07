@@ -251,7 +251,7 @@ body {
 }
 
 // ============================
-// DESKTOP SIDEBAR NAVIGATION
+// DESKTOP SIDEBAR NAVIGATION - FIXED RIGHT SIDE
 // ============================
 
 .desktop-sidebar {
@@ -311,24 +311,34 @@ body {
     position: relative;
     margin-bottom: 0.25rem;
     
-    &.active {
-        > .nav-link {
-            color: var(--accent-color);
-            background: var(--accent);
-            font-weight: 600;
+    &.current-page {
+        > .nav-link:not(.folder-toggle) {
+            color: var(--accent-color) !important;
+            background: var(--accent) !important;
+            font-weight: 600 !important;
             
-            &:not(.folder-toggle) {
-                &::before {
-                    content: '';
-                    position: absolute;
-                    left: -1rem;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 3px;
-                    height: 60%;
-                    background: var(--accent-color);
-                    border-radius: 0 2px 2px 0;
-                }
+            &::before {
+                content: '' !important;
+                position: absolute;
+                left: -1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 60%;
+                background: var(--accent-color);
+                border-radius: 0 2px 2px 0;
+            }
+        }
+    }
+    
+    // Folder active state (parent of current page)
+    &.nav-folder.active:not(.current-page) {
+        > .nav-link {
+            color: var(--text-dark);
+            font-weight: 500;
+            
+            &::before {
+                display: none;
             }
         }
     }
@@ -362,14 +372,6 @@ body {
                 opacity: 1;
             }
         }
-        
-        // Active folder styling
-        &.active {
-            > .nav-link {
-                color: var(--accent-color);
-                font-weight: 600;
-            }
-        }
     }
 }
 
@@ -396,14 +398,13 @@ body {
         background: var(--accent);
     }
 
-    // Exact page match - stronger highlight
     &.exact-active {
-        color: var(--accent-color);
-        background: var(--accent);
-        font-weight: 600;
+        color: var(--accent-color) !important;
+        background: var(--accent) !important;
+        font-weight: 600 !important;
         
         &::before {
-            content: '';
+            content: '' !important;
             position: absolute;
             left: -1rem;
             top: 50%;
@@ -714,6 +715,8 @@ body {
     
     // Ensure content doesn't get hidden behind sidebar
     max-width: calc(100% - 320px);
+    margin-left: auto;
+    margin-right: auto;
 }
 
 // Hero section
