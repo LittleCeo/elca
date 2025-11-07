@@ -6,3 +6,4 @@ Upcoming changes:
 * Changing header name to be optional to override it with Logo image
 * Styles for Fonts and Titles
 * Image Supporting
+* The previous page,next page stuff
