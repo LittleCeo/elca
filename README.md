@@ -7,3 +7,5 @@ Upcoming changes:
 * Styles for Fonts and Titles
 * Image Supporting
 * The previous page,next page stuff
+* Footer Fix✅
+* Footer Social icons change
