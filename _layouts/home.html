@@ -1,12 +1,15 @@
----
-layout: default
----
-
-<section class="hero">
-    <h1>{{ site.title }}</h1>
-    <p>{{ site.description }}</p>
-</section>
-
-<section class="content">
-    {{ content }}
-</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include docshead.html %}
+</head>
+<body>
+    {% include docsheader.html %}
+    
+    <main class="container main-content">
+        {{ content }}
+    </main>
+    
+    {% include docsfooter.html %}
+</body>
+</html>
