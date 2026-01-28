@@ -746,9 +746,62 @@ body {
     padding: 3rem 0;
 }
 
+// ============================
+// IMAGE FIXES - PREVENT OVERFLOW
+// ============================
+
+// Apply to all content areas where images might appear
+.main-content-area,
+.content,
+.post-content,
+.post .post-content,
+.hero,
+article {
+    // Ensure images don't overflow their containers
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1.5rem auto;
+        
+        // For very long/tall images
+        max-height: 90vh;
+        object-fit: contain;
+    }
+    
+    // Specifically for inline images in markdown content
+    p img,
+    figure img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    // Figure element styling
+    figure {
+        margin: 2rem 0;
+        text-align: center;
+        
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+        }
+        
+        figcaption {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+    }
+}
+
 // Posts
 .post {
     padding: 2rem 0;
+    width: 100%;
+    overflow: hidden; // Prevent any overflow
     
     .post-header {
         margin-bottom: 2rem;
@@ -771,6 +824,8 @@ body {
         font-size: 1.125rem;
         line-height: 1.8;
         color: var(--text-dark);
+        width: 100%;
+        overflow: hidden; // Prevent any overflow
         
         h1, h2, h3, h4, h5, h6 {
             color: var(--text-dark);
@@ -781,6 +836,14 @@ body {
         p {
             color: var(--text-dark);
             margin-bottom: 1.5rem;
+        }
+        
+        // Additional image styles for post content
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
         }
     }
 }
@@ -988,6 +1051,17 @@ body {
         }
     }
     
+    // Image adjustments for mobile
+    .main-content-area,
+    .content,
+    .post-content,
+    .post .post-content,
+    article {
+        img {
+            max-height: 80vh;
+        }
+    }
+    
     // Mobile navigation scrollbar
     .mobile-nav-menu::-webkit-scrollbar {
         width: 4px;
@@ -1032,6 +1106,17 @@ body {
     
     .post .post-header h1 {
         font-size: 2rem;
+    }
+    
+    // Image adjustments for very small screens
+    .main-content-area,
+    .content,
+    .post-content,
+    .post .post-content,
+    article {
+        img {
+            max-height: 70vh;
+        }
     }
     
     .mobile-nav-content {
@@ -1098,6 +1183,8 @@ pre {
 .main-content-area {
     flex: 1;
     padding: 2rem;
+    width: 100%;
+    overflow: hidden; // Prevent any overflow
 }
 
 // Print styles
@@ -1112,5 +1199,11 @@ pre {
         margin-top: 0;
         padding-right: 0;
         max-width: 100%;
+    }
+    
+    // Images in print
+    img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
     }
 }
